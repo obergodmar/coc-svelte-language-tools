@@ -74,3 +74,11 @@ dist
 
 # MacOS
 .DS_Store
+
+# CoC development environment
+.devenv/
+.direnv/
+.coc-test/
+devenv.local.nix
+devenv.local.yaml
+artifacts/

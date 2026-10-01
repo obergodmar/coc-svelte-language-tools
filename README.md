@@ -1,3 +1,12 @@
+# CoC fork
+
+This fork adds [coc-svelte-language-tools](packages/coc-svelte-language-tools/README.md),
+a coc.nvim client built alongside the upstream Svelte language tools.
+Development happens on the `coc` branch. See [maintenance notes](COC-MAINTENANCE.md)
+for the Nix environment, tests, packaging and upstream rebase workflow.
+
+---
+
 <p>
   <a href="https://svelte.dev">
 	<img alt="Cybernetically enhanced web apps: Svelte" src="https://user-images.githubusercontent.com/49038/76711598-f0b39180-66e7-11ea-9501-37f6e1edf8a6.png">
