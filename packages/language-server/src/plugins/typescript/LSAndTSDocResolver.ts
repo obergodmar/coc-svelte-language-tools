@@ -289,6 +289,13 @@ export class LSAndTSDocResolver {
         path: string,
         changes?: TextDocumentContentChangeEvent[]
     ): Promise<void> {
+        // Clients may replay complete unsaved buffers after a server restart,
+        // before any Svelte request has created the corresponding TS service.
+        if (changes?.some((change) => !('range' in change))) {
+            const service = await this.getTSService(path);
+            service.updateTsOrJsFile(path, changes);
+            return;
+        }
         await this.updateExistingFile(path, (service) => service.updateTsOrJsFile(path, changes));
     }
 

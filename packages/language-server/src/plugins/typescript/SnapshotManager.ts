@@ -56,7 +56,11 @@ export class GlobalSnapshotsManager {
         changes?: TextDocumentContentChangeEvent[]
     ): JSOrTSDocumentSnapshot | undefined {
         fileName = normalizePath(fileName);
-        const previousSnapshot = this.get(fileName);
+        let previousSnapshot = this.get(fileName);
+
+        if (!previousSnapshot && changes?.some((change) => !('range' in change))) {
+            previousSnapshot = DocumentSnapshot.fromNonSvelteFilePath(fileName, this.tsSystem);
+        }
 
         if (changes) {
             if (!(previousSnapshot instanceof JSOrTSDocumentSnapshot)) {
