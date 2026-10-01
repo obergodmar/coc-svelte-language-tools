@@ -1,0 +1,20 @@
+{
+    "name": "coc-svelte-test-host",
+    "version": "0.0.0",
+    "private": true,
+    "main": "index.js",
+    "engines": {
+        "coc": "^0.0.82"
+    },
+    "activationEvents": [
+        "*"
+    ],
+    "contributes": {
+        "commands": [
+            {
+                "command": "svelte.test",
+                "title": "Run integration tests"
+            }
+        ]
+    }
+}

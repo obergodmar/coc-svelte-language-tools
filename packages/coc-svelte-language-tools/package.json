@@ -1,0 +1,426 @@
+{
+    "name": "coc-svelte-language-tools",
+    "version": "0.1.0",
+    "description": "Svelte and SvelteKit language support for coc.nvim, maintained with upstream language-tools",
+    "license": "MIT",
+    "author": "obergodmar",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/obergodmar/coc-svelte-language-tools.git",
+        "directory": "packages/coc-svelte-language-tools"
+    },
+    "main": "dist/extension.js",
+    "files": [
+        "dist",
+        "README.md",
+        "LICENSE"
+    ],
+    "engines": {
+        "node": ">=24.12.0",
+        "coc": "^0.0.82"
+    },
+    "activationEvents": [
+        "onLanguage:svelte",
+        "onLanguage:javascript",
+        "onLanguage:javascriptreact",
+        "onLanguage:typescript",
+        "onLanguage:typescriptreact",
+        "onCommand:svelte.restartLanguageServer",
+        "onCommand:svelte.typescript.findFileReferences",
+        "onCommand:svelte.typescript.findComponentReferences",
+        "onCommand:svelte.showCompiledCode",
+        "onCommand:svelte.showCompiledCSS",
+        "onCommand:svelte.extractComponent",
+        "onCommand:svelte.migrate_to_svelte_5"
+    ],
+    "contributes": {
+        "configuration": {
+            "type": "object",
+            "title": "Svelte",
+            "properties": {
+                "svelte.plugin.typescript.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "TypeScript",
+                    "description": "Enable the TypeScript plugin"
+                },
+                "svelte.plugin.typescript.diagnostics.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "TypeScript: Diagnostics",
+                    "description": "Enable diagnostic messages for TypeScript"
+                },
+                "svelte.plugin.typescript.hover.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "TypeScript: Hover Info",
+                    "description": "Enable hover info for TypeScript"
+                },
+                "svelte.plugin.typescript.documentSymbols.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "TypeScript: Symbols in Outline",
+                    "description": "Enable document symbols for TypeScript"
+                },
+                "svelte.plugin.typescript.completions.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "TypeScript: Completions",
+                    "description": "Enable completions for TypeScript"
+                },
+                "svelte.plugin.typescript.codeActions.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "TypeScript: Code Actions",
+                    "description": "Enable code actions for TypeScript"
+                },
+                "svelte.plugin.typescript.selectionRange.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "TypeScript: Selection Range",
+                    "description": "Enable selection range for TypeScript"
+                },
+                "svelte.plugin.typescript.signatureHelp.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "TypeScript: Signature Help",
+                    "description": "Enable signature help (parameter hints) for TypeScript"
+                },
+                "svelte.plugin.typescript.semanticTokens.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "TypeScript: Semantic Tokens",
+                    "description": "Enable semantic tokens (semantic highlight) for TypeScript."
+                },
+                "svelte.plugin.typescript.workspaceSymbols.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "TypeScript: Workspace Symbols",
+                    "description": "Enable workspace symbols for TypeScript."
+                },
+                "svelte.plugin.css.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "CSS",
+                    "description": "Enable the CSS plugin"
+                },
+                "svelte.plugin.css.globals": {
+                    "type": "string",
+                    "default": "",
+                    "title": "CSS: Global Files",
+                    "description": "Which css files should be checked for global variables (`--global-var: value;`). These variables are added to the css completions. String of comma-separated file paths or globs relative to workspace root."
+                },
+                "svelte.plugin.css.diagnostics.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "CSS: Diagnostics",
+                    "description": "Enable diagnostic messages for CSS"
+                },
+                "svelte.plugin.css.hover.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "CSS: Hover Info",
+                    "description": "Enable hover info for CSS"
+                },
+                "svelte.plugin.css.completions.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "CSS: Auto Complete",
+                    "description": "Enable auto completions for CSS"
+                },
+                "svelte.plugin.css.completions.emmet": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "CSS: Include Emmet Completions",
+                    "description": "Enable emmet auto completions for CSS"
+                },
+                "svelte.plugin.css.documentColors.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "CSS: Document Colors",
+                    "description": "Enable document colors for CSS"
+                },
+                "svelte.plugin.css.colorPresentations.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "CSS: Color Picker",
+                    "description": "Enable color picker for CSS"
+                },
+                "svelte.plugin.css.documentSymbols.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "CSS: Symbols in Outline",
+                    "description": "Enable document symbols for CSS"
+                },
+                "svelte.plugin.css.selectionRange.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "CSS: SelectionRange",
+                    "description": "Enable selection range for CSS"
+                },
+                "svelte.plugin.html.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "HTML",
+                    "description": "Enable the HTML plugin"
+                },
+                "svelte.plugin.html.hover.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "HTML: Hover Info",
+                    "description": "Enable hover info for HTML"
+                },
+                "svelte.plugin.html.completions.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "HTML: Auto Complete",
+                    "description": "Enable auto completions for HTML"
+                },
+                "svelte.plugin.html.completions.emmet": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "HTML: Include Emmet Completions",
+                    "description": "Enable emmet auto completions for HTML"
+                },
+                "svelte.plugin.html.tagComplete.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "HTML: Tag Auto Closing",
+                    "description": "Enable HTML tag auto closing"
+                },
+                "svelte.plugin.html.documentSymbols.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "HTML: Symbols in Outline",
+                    "description": "Enable document symbols for HTML"
+                },
+                "svelte.plugin.html.linkedEditing.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "HTML: Linked Editing",
+                    "description": "Enable Linked Editing for HTML"
+                },
+                "svelte.plugin.svelte.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "Svelte",
+                    "description": "Enable the Svelte plugin"
+                },
+                "svelte.plugin.svelte.diagnostics.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "Svelte: Diagnostics",
+                    "description": "Enable diagnostic messages for Svelte"
+                },
+                "svelte.plugin.svelte.compilerWarnings": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string",
+                        "enum": [
+                            "ignore",
+                            "error"
+                        ]
+                    },
+                    "default": {},
+                    "title": "Svelte: Compiler Warnings Settings",
+                    "description": "Svelte compiler warning codes to ignore or to treat as errors. Example: { 'css-unused-selector': 'ignore', 'unused-export-let': 'error'}"
+                },
+                "svelte.plugin.svelte.format.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "Svelte: Format",
+                    "description": "Enable formatting for Svelte (includes css & js). You can set some formatting options through this extension. They will be ignored if there's any kind of configuration file, for example a `.prettierrc` file."
+                },
+                "svelte.plugin.svelte.format.config.svelteSortOrder": {
+                    "type": "string",
+                    "default": "options-scripts-markup-styles",
+                    "title": "Svelte Format: Sort Order",
+                    "description": "Format: join the keys `options`, `scripts`, `markup`, `styles` with a - in the order you want. This option is ignored if there's any kind of configuration file, for example a `.prettierrc` file."
+                },
+                "svelte.plugin.svelte.format.config.svelteStrictMode": {
+                    "type": "boolean",
+                    "default": false,
+                    "title": "Svelte Format: Strict Mode",
+                    "description": "More strict HTML syntax. This option is ignored if there's any kind of configuration file, for example a `.prettierrc` file."
+                },
+                "svelte.plugin.svelte.format.config.svelteAllowShorthand": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "Svelte Format: Allow Shorthand",
+                    "description": "Option to enable/disable component attribute shorthand if attribute name and expression are the same. This option is ignored if there's any kind of configuration file, for example a `.prettierrc` file."
+                },
+                "svelte.plugin.svelte.format.config.svelteBracketNewLine": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "Svelte Format: Bracket New Line",
+                    "description": "Put the `>` of a multiline element on a new line. This option is ignored if there's any kind of configuration file, for example a `.prettierrc` file."
+                },
+                "svelte.plugin.svelte.format.config.svelteIndentScriptAndStyle": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "Svelte Format: Indent Script And Style",
+                    "description": "Whether or not to indent code inside `<script>` and `<style>` tags. This option is ignored if there's any kind of configuration file, for example a `.prettierrc` file."
+                },
+                "svelte.plugin.svelte.format.config.printWidth": {
+                    "type": "number",
+                    "default": 80,
+                    "title": "Svelte Format: Print Width",
+                    "description": "Maximum line width after which code is tried to be broken up. This is a Prettier core option. If you have the Prettier extension installed, this option is ignored and the corresponding option of that extension is used instead. This option is also ignored if there's any kind of configuration file, for example a `.prettierrc` file."
+                },
+                "svelte.plugin.svelte.format.config.singleQuote": {
+                    "type": "boolean",
+                    "default": false,
+                    "title": "Svelte Format: Quotes",
+                    "description": "Use single quotes instead of double quotes, where possible. This is a Prettier core option. If you have the Prettier extension installed, this option is ignored and the corresponding option of that extension is used instead. This option is also ignored if there's any kind of configuration file, for example a `.prettierrc` file."
+                },
+                "svelte.plugin.svelte.completions.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "Svelte: Completions",
+                    "description": "Enable auto completions for Svelte"
+                },
+                "svelte.plugin.svelte.hover.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "Svelte: Hover",
+                    "description": "Enable hover information for Svelte"
+                },
+                "svelte.plugin.svelte.codeActions.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "Svelte: Code Actions",
+                    "description": "Enable Code Actions for Svelte"
+                },
+                "svelte.plugin.svelte.selectionRange.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "Svelte: Selection Range",
+                    "description": "Enable selection range for Svelte"
+                },
+                "svelte.plugin.svelte.rename.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "Svelte: Rename",
+                    "description": "Enable rename/move Svelte files functionality"
+                },
+                "svelte.plugin.svelte.runesLegacyModeCodeLens.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "Svelte: Legacy/Runes mode Code Lens",
+                    "description": "Show a code lens at the top of Svelte files indicating if they are in runes mode or legacy mode. Only visible in Svelte 5 projects."
+                },
+                "svelte.plugin.svelte.defaultScriptLanguage": {
+                    "type": "string",
+                    "default": "none",
+                    "title": "Svelte: Default Script Language",
+                    "description": "The default language to use when generating new script tags",
+                    "enum": [
+                        "none",
+                        "ts"
+                    ]
+                },
+                "svelte.plugin.svelte.documentHighlight.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "Svelte: Document Highlight",
+                    "description": "Enable document highlight support. Requires a restart."
+                },
+                "svelte.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable the Svelte language server. Restart coc.nvim after changing this setting."
+                },
+                "svelte.enable-ts-plugin": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable Svelte integration in coc-tsserver for JavaScript and TypeScript files."
+                },
+                "svelte.language-server.runtime": {
+                    "type": "string",
+                    "scope": "application",
+                    "description": "Node executable used to launch the server. Defaults to the coc.nvim Node runtime."
+                },
+                "svelte.language-server.ls-path": {
+                    "type": "string",
+                    "scope": "application",
+                    "description": "Optional absolute path to a custom language server entry point."
+                },
+                "svelte.language-server.runtime-args": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "default": [],
+                    "scope": "application",
+                    "description": "Additional Node arguments for the language server."
+                },
+                "svelte.language-server.debug": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable verbose Svelte language server logging."
+                },
+                "svelte.updateImportsOnFileMove.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Update Svelte imports for file moves performed through coc.nvim."
+                }
+            }
+        },
+        "typescriptServerPlugins": [
+            {
+                "name": "typescript-svelte-plugin",
+                "enableForWorkspaceTypeScriptVersions": true
+            }
+        ],
+        "commands": [
+            {
+                "command": "svelte.restartLanguageServer",
+                "title": "Svelte: restartLanguageServer"
+            },
+            {
+                "command": "svelte.typescript.findFileReferences",
+                "title": "Svelte: typescript.findFileReferences"
+            },
+            {
+                "command": "svelte.typescript.findComponentReferences",
+                "title": "Svelte: typescript.findComponentReferences"
+            },
+            {
+                "command": "svelte.showCompiledCode",
+                "title": "Svelte: showCompiledCode"
+            },
+            {
+                "command": "svelte.showCompiledCSS",
+                "title": "Svelte: showCompiledCSS"
+            },
+            {
+                "command": "svelte.extractComponent",
+                "title": "Svelte: extractComponent"
+            },
+            {
+                "command": "svelte.migrate_to_svelte_5",
+                "title": "Svelte: migrate_to_svelte_5"
+            }
+        ]
+    },
+    "scripts": {
+        "build": "tsc -p tsconfig.json",
+        "test": "pnpm build && node --test test/*.test.cjs",
+        "prepack": "pnpm build",
+        "test:setup": "node test/setup.cjs",
+        "test:integration": "node test/integration.cjs",
+        "pack:release": "node scripts/pack.cjs",
+        "prepublishOnly": "node -e \"throw new Error('Use the verified tarball produced by pack:release')\"",
+        "test:package": "node test/package.cjs"
+    },
+    "dependencies": {
+        "svelte-language-server": "workspace:*",
+        "typescript": "6.0.3",
+        "typescript-svelte-plugin": "workspace:*"
+    },
+    "devDependencies": {
+        "@types/node": "^24.0.0",
+        "coc.nvim": "0.0.83-next.27",
+        "svelte5": "npm:svelte@5.57.1"
+    }
+}
