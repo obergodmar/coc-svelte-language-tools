@@ -414,6 +414,7 @@
         "test:package": "node test/package.cjs"
     },
     "dependencies": {
+        "svelte": "4.2.20",
         "svelte-language-server": "workspace:*",
         "typescript": "6.0.3",
         "typescript-svelte-plugin": "workspace:*"
