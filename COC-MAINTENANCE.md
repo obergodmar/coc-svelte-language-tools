@@ -58,6 +58,10 @@ Build and verify the archive from the same commit. `coc-pack` deploys the pnpm
 production graph, materializes its symlinks into a normal npm dependency tree and
 bundles it. This prevents installations from silently using different upstream
 server/plugin releases. The offline package test is required before publishing.
+It installs outside the checkout so workspace dependencies cannot hide missing
+runtime dependencies. The extension bundles Svelte 4 as a fallback compiler and
+to satisfy `svelte2tsx`'s peer dependency in the TypeScript plugin; project-local
+Svelte versions are resolved by the upstream tools.
 
 The initial implementation is tested on Linux/Neovim. Expand the documented test
 matrix before claiming Vim/platform parity or complete SvelteKit integration.
