@@ -1,0 +1,46 @@
+name: CoC
+
+on:
+  push:
+    branches: [coc]
+  pull_request:
+    branches: [coc]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+      - uses: cachix/cachix-action@v16
+        with:
+          name: devenv
+      - name: Install devenv
+        run: nix profile install github:cachix/devenv/v2.1.2
+      - name: Build and test
+        shell: devenv shell -- bash -e {0}
+        run: |
+          coc-setup
+          coc-build
+          coc-test
+          pnpm --filter svelte-language-server test
+          coc-test-setup
+          coc-test-integration
+          coc-pack
+          pnpm --filter coc-svelte-language-tools test:package
+          pnpm exec prettier --check packages/coc-svelte-language-tools .github/workflows/coc.yml
+          nixfmt --check devenv.nix nix/pnpm.nix
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coc-test-artifacts
+          path: |
+            artifacts/*.tgz
+            .coc-test/run-*/result.json
+            .coc-test/run-*/coc.log
+            .coc-test/run-*/vim-error
