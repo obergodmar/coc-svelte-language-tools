@@ -39,8 +39,10 @@ jobs:
         if: always()
         with:
           name: coc-test-artifacts
+          include-hidden-files: true
           path: |
             artifacts/*.tgz
             .coc-test/run-*/result.json
             .coc-test/run-*/coc.log
             .coc-test/run-*/vim-error
+            .coc-test/run-*/tsserver-logs/**/*.log

@@ -115,6 +115,16 @@ exports.activate = (context) => {
                 });
                 await run('coc-tsserver resolves a Svelte component', async () => {
                     await workspace.openResource(file('index.ts'));
+                    const status = await commands.executeCommand(
+                        'typescript.tsserverRequest',
+                        'status',
+                        {}
+                    );
+                    assert.equal(
+                        status?.body?.version,
+                        '6.0.3',
+                        'test must use the configured TypeScript version'
+                    );
                     await eventually(async () => {
                         const response = await commands.executeCommand(
                             'typescript.tsserverRequest',
@@ -167,6 +177,17 @@ exports.activate = (context) => {
                     )
                 );
                 throw error;
+            } finally {
+                // Neovim deletes its temporary directory on exit, so retain TS
+                // plugin loading diagnostics before the editor shuts down.
+                const logs = path.join(require('node:os').tmpdir(), 'coc-tsserver-log');
+                if (fs.existsSync(logs)) {
+                    fs.cpSync(
+                        logs,
+                        path.join(path.dirname(process.env.COC_SVELTE_RESULT), 'tsserver-logs'),
+                        { recursive: true }
+                    );
+                }
             }
         })
     );
