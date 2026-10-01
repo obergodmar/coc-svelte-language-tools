@@ -517,7 +517,16 @@ describe('CompletionProviderImpl', function () {
             }
         );
 
-        const eventCompletions = completions!.items.filter((item) => item.label.startsWith('on:'));
+        // TypeScript may reorder equivalent union members between releases.
+        const eventCompletions = completions!.items
+            .filter((item) => item.label.startsWith('on:'))
+            .map((item) => ({
+                ...item,
+                detail: item.detail?.replace(
+                    'CustomEvent<number> | CustomEvent<string>',
+                    'CustomEvent<string> | CustomEvent<number>'
+                )
+            }));
 
         assert.deepStrictEqual(eventCompletions, <CompletionItem[]>[
             {
