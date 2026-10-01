@@ -16,7 +16,8 @@ execFileSync(
         '--no-fund',
         '--cache',
         path.join(install, 'empty-cache'),
-        path.join(root, 'artifacts', `coc-svelte-language-tools-${version}.tgz`)
+        process.env.COC_SVELTE_ARCHIVE ||
+            path.join(root, 'artifacts', `coc-svelte-language-tools-${version}.tgz`)
     ],
     {
         cwd: install,

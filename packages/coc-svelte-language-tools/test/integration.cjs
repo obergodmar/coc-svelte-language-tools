@@ -10,6 +10,20 @@ const runtime =
 const extension = process.env.COC_SVELTE_EXTENSION || path.resolve(__dirname, '..');
 const developmentExtension = path.resolve(__dirname, '..');
 const run = fs.mkdtempSync(path.join(scratch, 'run-'));
+fs.mkdirSync(path.join(run, 'tmp'));
+fs.mkdirSync(path.join(run, 'config'));
+// Extension settings must be loaded from a config file. CoC drops unknown
+// g:coc_user_config keys before dynamically registered extensions contribute them.
+fs.writeFileSync(
+    path.join(run, 'config/coc-settings.json'),
+    JSON.stringify({
+        'suggest.noselect': true,
+        'tsserver.log': 'verbose',
+        'tsserver.tsdk': path.join(extension, 'node_modules/typescript/lib'),
+        'tsserver.useLocalTsdk': false,
+        'workspace.rootPatterns': ['package.json']
+    })
+);
 const fixture = path.join(run, 'project');
 fs.mkdirSync(fixture);
 fs.mkdirSync(path.join(fixture, 'node_modules'));
@@ -67,7 +81,6 @@ let g:coc_config_home = ${quote(path.join(run, 'config'))}
 let g:coc_node_path = ${quote(process.execPath)}
 let g:coc_disable_startup_warning = 1
 let g:coc_global_extensions = []
-let g:coc_user_config = {'suggest.noselect': v:true, 'tsserver.tsdk': ${quote(path.join(extension, 'node_modules/typescript/lib'))}, 'tsserver.useLocalTsdk': v:false, 'workspace.rootPatterns': ['package.json']}
 execute 'set runtimepath^=' . fnameescape(${quote(runtime)})
 filetype plugin indent on
 runtime plugin/coc.vim
@@ -94,6 +107,7 @@ const result = spawnSync('nvim', ['--headless', '-u', init, '-i', 'NONE'], {
     encoding: 'utf8',
     env: {
         ...process.env,
+        TMPDIR: path.join(run, 'tmp'),
         COC_SVELTE_FIXTURE: fixture,
         COC_SVELTE_RESULT: resultFile,
         XDG_CONFIG_HOME: path.join(run, 'xdg-config'),
