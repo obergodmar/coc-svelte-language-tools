@@ -318,7 +318,19 @@ exports.activate = (context) => {
                         assert.match(document.getText(), /svelte/);
                         assert.equal(await workspace.nvim.eval('&l:modifiable'), 0);
                         assert.equal(await workspace.nvim.eval('&l:filetype'), 'javascript');
+                        assert.equal(await workspace.nvim.eval('&l:syntax'), 'javascript');
+                        assert.equal(await workspace.nvim.eval('b:current_syntax'), 'javascript');
+                        assert.match(
+                            await workspace.nvim.call('execute', ['syntax list']),
+                            /javaScript/
+                        );
                     }, 'compiled preview buffer was not attached');
+                    await workspace.openResource(file('Child.svelte'));
+                    await commands.executeCommand('svelte.showCompiledCSS');
+                    assert.equal(await workspace.nvim.eval('&l:filetype'), 'css');
+                    assert.equal(await workspace.nvim.eval('&l:syntax'), 'css');
+                    assert.equal(await workspace.nvim.eval('b:current_syntax'), 'css');
+                    assert.match(await workspace.nvim.call('execute', ['syntax list']), /css/);
                 });
                 await run('multi-root Svelte 4 and Svelte 5 isolation', async () => {
                     assert.equal(workspace.workspaceFolders.length, 3);

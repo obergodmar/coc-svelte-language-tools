@@ -245,8 +245,14 @@ export function activate(context: ExtensionContext) {
                         fragment: String(document.version)
                     }).toString()
                 );
+                const filetype = suffix === 'css' ? 'css' : 'javascript';
                 await workspace.nvim.command(
-                    `setlocal buftype=nofile bufhidden=wipe noswapfile nomodifiable readonly filetype=${suffix === 'css' ? 'css' : 'javascript'}`
+                    `setlocal buftype=nofile bufhidden=wipe noswapfile nomodifiable readonly filetype=${filetype} syntax=${filetype}`
+                );
+                // Some editor setups only start Tree-sitter for normal file buffers.
+                // Load a buffer-local fallback even when global syntax autocommands are off.
+                await workspace.nvim.command(
+                    `if !exists('b:current_syntax') | runtime! syntax/${filetype}.vim | endif`
                 );
             })
         );
