@@ -323,6 +323,12 @@ export class SvelteSnapshotManager {
         return snapshot;
     }
 
+    refreshOpenFile(fileName: string) {
+        // reloadFromFile goes through our transformed readFile and marks the
+        // containing projects dirty without mutating the file on disk.
+        this.projectService.getScriptInfo(fileName)?.reloadFromFile();
+    }
+
     private patchProjectService() {
         // @ts-expect-error The projectService is shared across some instances, make sure we patch only once
         if (this.projectService[snapshots]) return;
@@ -368,7 +374,14 @@ export class SvelteSnapshotManager {
                 return originalText;
             } else if (isSvelteFilePath(path)) {
                 this.logger.debug('Read Svelte file:', path);
-                const svelteCode = readFile(path) || '';
+                const canonicalPath = this.projectService.toCanonicalFileName(path);
+                const overlay = this.configManager
+                    .getConfig()
+                    .svelteDocuments?.find(
+                        (doc) =>
+                            this.projectService.toCanonicalFileName(doc.fileName) === canonicalPath
+                    );
+                const svelteCode = overlay?.text ?? readFile(path) ?? '';
                 const isTsFile = true; // TODO check file contents? TS might be okay with importing ts into js.
                 let code: string;
                 let mapper: SourceMapper;

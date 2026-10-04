@@ -50,8 +50,6 @@ function init(modules: { typescript: typeof ts }): ts.server.PluginModule {
         const parsedCommandLine = getProjectParsedCommandLine(info.project);
 
         // For some reason it's no longer enough to patch this at the projectService level, so we do it here, too
-        // TODO investigate if we can use the script snapshot for all Svelte files, too, enabling Svelte file
-        // updates getting picked up without a file save - move this logic into the snapshot manager then?
         const getScriptSnapshot = info.languageServiceHost.getScriptSnapshot.bind(
             info.languageServiceHost
         );
@@ -138,7 +136,8 @@ function init(modules: { typescript: typeof ts }): ts.server.PluginModule {
             configManager
         );
 
-        const updateProjectWhenConfigChanges = () => {
+        const updateProjectWhenConfigChanges = (_config: Configuration, changedFiles: string[]) => {
+            changedFiles.forEach((file) => snapshotManager.refreshOpenFile(file));
             // enabling/disabling the plugin means TS has to recompute stuff
             // don't clear semantic cache here
             // typescript now expected the program updates to be completely in their control
