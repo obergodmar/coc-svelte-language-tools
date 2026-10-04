@@ -31,7 +31,9 @@
         "onCommand:svelte.showCompiledCode",
         "onCommand:svelte.showCompiledCSS",
         "onCommand:svelte.extractComponent",
-        "onCommand:svelte.migrate_to_svelte_5"
+        "onCommand:svelte.migrate_to_svelte_5",
+        "onCommand:svelte.insertSnippet",
+        "onCommand:svelte.createRouteFile"
     ],
     "contributes": {
         "configuration": {
@@ -363,6 +365,16 @@
                     "type": "boolean",
                     "default": true,
                     "description": "Update Svelte imports for file moves performed through coc.nvim."
+                },
+                "svelte.autoClosingTags": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Close HTML and component tags while typing in Svelte buffers."
+                },
+                "svelte.snippets.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Offer Svelte block snippets with s- prefixes in completion."
                 }
             }
         },
@@ -400,6 +412,14 @@
             {
                 "command": "svelte.migrate_to_svelte_5",
                 "title": "Svelte: migrate_to_svelte_5"
+            },
+            {
+                "command": "svelte.insertSnippet",
+                "title": "Svelte: insert snippet"
+            },
+            {
+                "command": "svelte.createRouteFile",
+                "title": "SvelteKit: create route file"
             }
         ]
     },

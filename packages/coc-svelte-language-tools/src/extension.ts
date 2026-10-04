@@ -16,6 +16,9 @@ import { configurationSections, initializationOptions } from './configuration';
 import { isConfiguration, isScript } from './files';
 import { TypeScriptPlugin } from './tsplugin';
 import { filterRenameEdit } from './rename';
+import { activateTagClosing } from './tagClosing';
+import { activateSnippets } from './snippets';
+import { activateRoutes } from './routes';
 
 let activeClient: LanguageClient | undefined;
 
@@ -68,6 +71,7 @@ export function activate(context: ExtensionContext) {
         }
     );
     activeClient = client;
+    context.subscriptions.push(activateTagClosing(client), activateSnippets(), activateRoutes());
     const report = (error: unknown) => output.appendLine(String(error));
 
     let restarting: Promise<void> | undefined;

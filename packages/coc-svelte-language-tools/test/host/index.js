@@ -152,6 +152,79 @@ exports.activate = (context) => {
                         assert.match(doc.textDocument.getText(), /from ['"]\.\/renamed['"]/);
                     }, 'imports were not updated after file move');
                 });
+                await run('automatic tag closing while typing', async () => {
+                    await workspace.openResource(file('Tags.svelte'));
+                    await workspace.nvim.input('A');
+                    await sleep(100);
+                    await workspace.nvim.input('>');
+                    await eventually(async () => {
+                        assert.equal(
+                            workspace
+                                .getDocument(file('Tags.svelte'))
+                                .textDocument.getText()
+                                .trim(),
+                            '<section></section>'
+                        );
+                    }, 'typed tag was not closed');
+                    await workspace.nvim.input('\u001b');
+                });
+                await run('tag closing respects configuration and void elements', async () => {
+                    const doc = workspace.getDocument(file('Tags.svelte'));
+                    const config = workspace.getConfiguration('svelte');
+                    const typeEnd = async (text) => {
+                        await doc.buffer.setLines([text], {
+                            start: 0,
+                            end: -1,
+                            strictIndexing: false
+                        });
+                        await doc.synchronize();
+                        await workspace.nvim.input('A');
+                        await sleep(100);
+                        await workspace.nvim.input('>');
+                        await eventually(
+                            async () => assert.ok(doc.textDocument.getText().includes('>')),
+                            'input missing'
+                        );
+                        await sleep(200);
+                        await workspace.nvim.input('\u001b');
+                        return doc.textDocument.getText().trim();
+                    };
+                    assert.equal(await typeEnd('<br'), '<br>');
+                    await config.update('autoClosingTags', false, true);
+                    assert.equal(await typeEnd('<article'), '<article>');
+                    await config.update('autoClosingTags', true, true);
+                });
+                await run('route command creates files without overwriting', async () => {
+                    const directory = path.join(root, 'src/routes/(app)/[slug]');
+                    const target = await commands.executeCommand(
+                        'svelte.createRouteFile',
+                        directory,
+                        'page',
+                        'ts'
+                    );
+                    assert.match(fs.readFileSync(target, 'utf8'), /PageProps/);
+                    assert.equal(
+                        (await workspace.getCurrentState()).document.uri,
+                        Uri.file(target).toString()
+                    );
+                    await assert.rejects(
+                        commands.executeCommand('svelte.createRouteFile', directory, 'page', 'ts'),
+                        /already exists/
+                    );
+                });
+                await run('native Svelte snippets', async () => {
+                    await workspace.openResource(file('Snippet.svelte'));
+                    await commands.executeCommand('svelte.insertSnippet', 's-if');
+                    assert.match(
+                        workspace.getDocument(file('Snippet.svelte')).textDocument.getText(),
+                        /\{#if condition\}/
+                    );
+                    assert.match(
+                        workspace.getDocument(file('Snippet.svelte')).textDocument.getText(),
+                        /\{\/if\}/
+                    );
+                    await workspace.nvim.input('\u001b');
+                });
                 await run('compiled preview', async () => {
                     await workspace.openResource(file('Child.svelte'));
                     await commands.executeCommand('svelte.showCompiledCode');

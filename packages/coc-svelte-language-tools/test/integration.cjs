@@ -62,6 +62,8 @@ let label: string = value;
 <p>{count} {label}</p>
 `
 );
+fs.writeFileSync(path.join(fixture, 'Tags.svelte'), '<section');
+fs.writeFileSync(path.join(fixture, 'Snippet.svelte'), '');
 fs.writeFileSync(path.join(fixture, 'value.ts'), 'export const value = 42;\n');
 fs.writeFileSync(
     path.join(fixture, 'Child.svelte'),
@@ -84,14 +86,20 @@ let g:coc_global_extensions = []
 execute 'set runtimepath^=' . fnameescape(${quote(runtime)})
 filetype plugin indent on
 runtime plugin/coc.vim
+function! FinishSvelteTests(error, result)
+  if a:error isnot v:null
+    call writefile([string(a:error), execute('messages')], ${quote(path.join(run, 'vim-error'))})
+    cquit!
+  endif
+  qa!
+endfunction
 function! RunSvelteTests(timer)
   try
     if wait(20000, {-> get(g:, 'coc_service_initialized', 0)}, 50) != 0
       throw 'coc.nvim did not initialize'
     endif
     call CocAction('registerExtensions', ${quote(path.join(scratch, 'extensions/node_modules/coc-tsserver'))}, ${quote(extension)}, ${quote(path.join(__dirname, 'host'))})
-    call CocAction('runCommand', 'svelte.test')
-    qa!
+    call CocActionAsync('runCommand', 'svelte.test', function('FinishSvelteTests'))
   catch
     call writefile([v:exception, v:throwpoint, execute('messages')], ${quote(path.join(run, 'vim-error'))})
     cquit!
