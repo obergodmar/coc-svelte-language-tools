@@ -12,6 +12,7 @@
   packages = [
     pkgs.git
     pkgs.neovim
+    pkgs.vim
     pkgs.nixfmt
     pkgs.gnutar
     pkgs.gzip
@@ -29,5 +30,6 @@
   scripts.coc-test.exec = "pnpm --filter coc-svelte-language-tools test";
   scripts.coc-test-setup.exec = "pnpm --filter coc-svelte-language-tools test:setup";
   scripts.coc-test-integration.exec = "pnpm --filter coc-svelte-language-tools test:integration";
+  scripts.coc-test-vim.exec = "COC_TEST_EDITOR=vim pnpm --filter coc-svelte-language-tools test:integration";
   scripts.coc-pack.exec = "pnpm --filter coc-svelte-language-tools pack:release";
 }

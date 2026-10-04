@@ -31,8 +31,10 @@ jobs:
           pnpm --filter svelte-language-server test
           coc-test-setup
           coc-test-integration
+          coc-test-vim
           coc-pack
           pnpm --filter coc-svelte-language-tools test:package
+          COC_TEST_EDITOR=vim pnpm --filter coc-svelte-language-tools test:package
           pnpm exec prettier --check packages/coc-svelte-language-tools .github/workflows/coc.yml
           nixfmt --check devenv.nix nix/pnpm.nix
       - uses: actions/upload-artifact@v4
@@ -45,4 +47,5 @@ jobs:
             .coc-test/run-*/result.json
             .coc-test/run-*/coc.log
             .coc-test/run-*/vim-error
+            .coc-test/run-*/editor-output.log
             .coc-test/run-*/tsserver-logs/**/*.log

@@ -81,6 +81,35 @@ exports.activate = (context) => {
                     });
                     assert.ok(edits.length > 0);
                 });
+                await run('rename, references, linked tags and organize imports', async () => {
+                    const uri = file('Features.svelte');
+                    await workspace.openResource(uri);
+                    const feature = (method, extra) =>
+                        client.sendRequest(method, { textDocument: { uri }, ...extra });
+                    const position = { line: 2, character: 8 };
+                    const renamed = await feature('textDocument/rename', {
+                        position,
+                        newName: 'greeting'
+                    });
+                    const edits =
+                        renamed.documentChanges?.flatMap((change) => change.edits || []) ||
+                        Object.values(renamed.changes || {}).flat();
+                    assert.equal(edits.filter((edit) => edit.newText === 'greeting').length, 2);
+                    const references = await feature('textDocument/references', {
+                        position,
+                        context: { includeDeclaration: true }
+                    });
+                    assert.equal(references.length, 2);
+                    const linked = await feature('textDocument/linkedEditingRange', {
+                        position: { line: 4, character: 2 }
+                    });
+                    assert.equal(linked.ranges.length, 2);
+                    const actions = await feature('textDocument/codeAction', {
+                        range: { start: position, end: position },
+                        context: { diagnostics: [], only: ['source.organizeImports'] }
+                    });
+                    assert.ok(actions.length > 0, 'organize imports action missing');
+                });
                 await run('unsaved TS edits reach Svelte diagnostics', async () => {
                     await workspace.openResource(file('value.ts'));
                     const doc = workspace.getDocument(file('value.ts'));
@@ -141,6 +170,61 @@ exports.activate = (context) => {
                         );
                     }, 'tsserver did not load the Svelte plugin');
                 });
+                await run(
+                    'unsaved Svelte props reach coc-tsserver and discard on close',
+                    async () => {
+                        const diagnostics = async () => {
+                            const response = await commands.executeCommand(
+                                'typescript.tsserverRequest',
+                                'semanticDiagnosticsSync',
+                                { file: path.join(root, 'index.ts') }
+                            );
+                            assert.ok(Array.isArray(response?.body), JSON.stringify(response));
+                            return response.body;
+                        };
+                        assert.ok((await diagnostics()).some((item) => item.code === 2322));
+                        await workspace.openResource(file('Child.svelte'));
+                        const doc = workspace.getDocument(file('Child.svelte'));
+                        await doc.buffer.setLines(
+                            [
+                                '<script lang="ts">let { name }: { name: number } = $props();</script>',
+                                '<p>{name}</p>'
+                            ],
+                            { start: 0, end: -1, strictIndexing: false }
+                        );
+                        await doc.synchronize();
+                        await eventually(
+                            async () => assert.equal((await diagnostics()).length, 0),
+                            'unsaved component props were not synchronized'
+                        );
+                        assert.match(
+                            fs.readFileSync(path.join(root, 'Child.svelte'), 'utf8'),
+                            /name: string/
+                        );
+                        await commands.executeCommand('tsserver.restart');
+                        await eventually(
+                            async () => assert.equal((await diagnostics()).length, 0),
+                            'tsserver restart lost the Svelte overlay'
+                        );
+                        await workspace
+                            .getConfiguration('svelte')
+                            .update('enable-ts-plugin', false, true);
+                        await sleep(150);
+                        await workspace
+                            .getConfiguration('svelte')
+                            .update('enable-ts-plugin', true, true);
+                        await eventually(
+                            async () => assert.equal((await diagnostics()).length, 0),
+                            're-enabling the plugin lost the Svelte overlay'
+                        );
+                        await workspace.nvim.command('bdelete!');
+                        await eventually(
+                            async () =>
+                                assert.ok((await diagnostics()).some((item) => item.code === 2322)),
+                            'closed component overlay was not discarded'
+                        );
+                    }
+                );
                 await run('file move updates Svelte imports', async () => {
                     await workspace.openResource(file('App.svelte'));
                     await workspace.renameFile(
@@ -228,9 +312,91 @@ exports.activate = (context) => {
                 await run('compiled preview', async () => {
                     await workspace.openResource(file('Child.svelte'));
                     await commands.executeCommand('svelte.showCompiledCode');
-                    const { document } = await workspace.getCurrentState();
-                    assert.equal(Uri.parse(document.uri).scheme, 'svelte-compiled');
-                    assert.match(document.getText(), /svelte/);
+                    await eventually(async () => {
+                        const { document } = await workspace.getCurrentState();
+                        assert.equal(Uri.parse(document.uri).scheme, 'svelte-compiled');
+                        assert.match(document.getText(), /svelte/);
+                        assert.equal(await workspace.nvim.eval('&l:modifiable'), 0);
+                        assert.equal(await workspace.nvim.eval('&l:filetype'), 'javascript');
+                    }, 'compiled preview buffer was not attached');
+                });
+                await run('multi-root Svelte 4 and Svelte 5 isolation', async () => {
+                    assert.equal(workspace.workspaceFolders.length, 3);
+                    const legacy = Uri.file(
+                        path.join(process.env.COC_SVELTE_LEGACY, 'Legacy.svelte')
+                    ).toString();
+                    await workspace.openResource(legacy);
+                    const diagnostics = await client.sendRequest('textDocument/diagnostic', {
+                        textDocument: { uri: legacy }
+                    });
+                    assert.equal(
+                        diagnostics.items.filter((item) => item.severity === 1).length,
+                        0,
+                        JSON.stringify(diagnostics)
+                    );
+                    const hover = await client.sendRequest('textDocument/hover', {
+                        textDocument: { uri: legacy },
+                        position: { line: 1, character: 7 }
+                    });
+                    assert.match(JSON.stringify(hover), /string/);
+                    const legacyScript = path.join(process.env.COC_SVELTE_LEGACY, 'index.ts');
+                    await workspace.openResource(Uri.file(legacyScript).toString());
+                    await eventually(async () => {
+                        const result = await commands.executeCommand(
+                            'typescript.tsserverRequest',
+                            'semanticDiagnosticsSync',
+                            { file: legacyScript }
+                        );
+                        assert.equal(result?.body?.length, 1, JSON.stringify(result));
+                        assert.equal(result.body[0].code, 2322, JSON.stringify(result));
+                    }, 'tsserver did not isolate the Svelte 4 project');
+                    await workspace.openResource(file('Child.svelte'));
+                    const modern = await client.sendRequest('textDocument/diagnostic', {
+                        textDocument: { uri: file('Child.svelte') }
+                    });
+                    assert.equal(
+                        modern.items.filter((item) => item.severity === 1).length,
+                        0,
+                        JSON.stringify(modern)
+                    );
+                });
+                await run('SvelteKit generated PageProps and $lib definitions', async () => {
+                    const kit = process.env.COC_SVELTE_KIT;
+                    const uri = Uri.file(path.join(kit, 'src/routes/+page.svelte')).toString();
+                    await workspace.openResource(uri);
+                    const kitRequest = (method, extra = {}) =>
+                        client.sendRequest(method, { textDocument: { uri }, ...extra });
+                    const diagnostics = await kitRequest('textDocument/diagnostic');
+                    assert.equal(
+                        diagnostics.items.filter((item) => item.severity === 1).length,
+                        0,
+                        JSON.stringify(diagnostics)
+                    );
+                    const definition = await kitRequest('textDocument/definition', {
+                        position: { line: 2, character: 11 }
+                    });
+                    assert.ok(
+                        definition.some(
+                            (entry) =>
+                                (entry.uri || entry.targetUri) ===
+                                Uri.file(path.join(kit, 'src/lib/message.ts')).toString()
+                        ),
+                        JSON.stringify(definition)
+                    );
+                    const doc = workspace.getDocument(uri);
+                    await doc.buffer.setLines(['const greeting: number = data.greeting;'], {
+                        start: 4,
+                        end: 5,
+                        strictIndexing: false
+                    });
+                    await doc.synchronize();
+                    await eventually(async () => {
+                        const result = await kitRequest('textDocument/diagnostic');
+                        assert.ok(
+                            result.items.some((item) => item.code === 2322),
+                            JSON.stringify(result)
+                        );
+                    }, 'generated PageProps must preserve the load return type');
                 });
                 fs.writeFileSync(
                     process.env.COC_SVELTE_RESULT,
