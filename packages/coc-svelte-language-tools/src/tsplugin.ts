@@ -1,11 +1,15 @@
-import { extensions, workspace, ExtensionContext, OutputChannel } from 'coc.nvim';
+import { extensions, workspace, Uri, ExtensionContext, OutputChannel } from 'coc.nvim';
 
 interface TypeScriptAPI {
-    configurePlugin(name: string, configuration: { enable: boolean }): void;
+    configurePlugin(
+        name: string,
+        configuration: { enable: boolean; svelteDocuments: { fileName: string; text: string }[] }
+    ): void;
 }
 
 export class TypeScriptPlugin {
     private disposed = false;
+    private timer: NodeJS.Timeout | undefined;
     private configured = false;
     private pending: Promise<void> = Promise.resolve();
 
@@ -15,6 +19,16 @@ export class TypeScriptPlugin {
     ) {
         context.subscriptions.push(
             this,
+            workspace.onDidOpenTextDocument((doc) => {
+                if (doc.languageId === 'svelte') this.schedule();
+            }),
+            workspace.onDidChangeTextDocument((event) => {
+                if (workspace.getDocument(event.textDocument.uri)?.filetype === 'svelte')
+                    this.schedule();
+            }),
+            workspace.onDidCloseTextDocument((doc) => {
+                if (doc.languageId === 'svelte') this.schedule();
+            }),
             extensions.onDidActiveExtension((extension) => {
                 if (extension.id === 'coc-tsserver') this.configure();
             }),
@@ -35,6 +49,11 @@ export class TypeScriptPlugin {
         );
     }
 
+    private schedule(): void {
+        clearTimeout(this.timer);
+        this.timer = setTimeout(() => this.configure(), 75);
+    }
+
     private configure(): void {
         this.pending = this.pending
             .then(async () => {
@@ -48,7 +67,16 @@ export class TypeScriptPlugin {
                     );
                 }
                 api.configurePlugin('typescript-svelte-plugin', {
-                    enable: workspace.getConfiguration('svelte').get('enable-ts-plugin', true)
+                    enable: workspace.getConfiguration('svelte').get('enable-ts-plugin', true),
+                    svelteDocuments: workspace.textDocuments
+                        .filter(
+                            (doc) =>
+                                doc.languageId === 'svelte' && Uri.parse(doc.uri).scheme === 'file'
+                        )
+                        .map((doc) => ({
+                            fileName: Uri.parse(doc.uri).fsPath,
+                            text: doc.getText()
+                        }))
                 });
                 this.configured = true;
             })
@@ -60,9 +88,13 @@ export class TypeScriptPlugin {
 
     dispose(): void {
         this.disposed = true;
+        clearTimeout(this.timer);
         const extension = extensions.getExtensionById<TypeScriptAPI>('coc-tsserver');
         if (extension?.isActive && this.configured) {
-            extension.exports.configurePlugin('typescript-svelte-plugin', { enable: false });
+            extension.exports.configurePlugin('typescript-svelte-plugin', {
+                enable: false,
+                svelteDocuments: []
+            });
         }
     }
 }
