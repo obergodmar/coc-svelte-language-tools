@@ -25,6 +25,7 @@
         "onLanguage:javascriptreact",
         "onLanguage:typescript",
         "onLanguage:typescriptreact",
+        "onCommand:svelte.showEnvironment",
         "onCommand:svelte.restartLanguageServer",
         "onCommand:svelte.typescript.findFileReferences",
         "onCommand:svelte.typescript.findComponentReferences",
@@ -385,6 +386,10 @@
             }
         ],
         "commands": [
+            {
+                "command": "svelte.showEnvironment",
+                "title": "Svelte: show environment"
+            },
             {
                 "command": "svelte.restartLanguageServer",
                 "title": "Svelte: restartLanguageServer"
