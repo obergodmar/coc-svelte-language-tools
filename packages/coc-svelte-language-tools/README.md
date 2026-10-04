@@ -142,7 +142,10 @@ No npm release has been published yet.
 -   External filesystem moves do not carry a reliable rename event; import updates
     require a move performed through CoC. Complex simultaneous folder moves need
     more coverage.
--   Previews are snapshots; run the command again after editing.
+-   Previews open in a separate read-only scratch window named `[Svelte compiled]`.
+    JS/CSS filetypes are set explicitly; no virtual URI or file on disk is needed.
+    Close the window with `:close`. Previews are snapshots; run the command again
+    after editing.
 -   SvelteKit `$types` and `$lib`, multiple workspace roots, Svelte 4/5 and Vim are
     integration-tested. SvelteKit 3, macOS and Windows remain outside the tested matrix.
 -   Tailwind and ESLint require their own providers. Avoid multiple formatting
