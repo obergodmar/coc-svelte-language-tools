@@ -6,9 +6,10 @@ server, TypeScript plugin and svelte2tsx are built from the same checkout.
 
 ## Status
 
-Initial implementation, version 0.1.0. Tested with Node 24, Neovim, a pinned
-coc.nvim master revision, coc-tsserver 2.4.1, TypeScript 6.0.3 and Svelte 5.57.1.
-Vim and other coc.nvim revisions have not yet been integration-tested.
+Version 0.2.0. Tested on Linux with Node 24, Neovim 0.12.5, Vim 9.2, a pinned
+coc.nvim master revision, coc-tsserver 2.4.1, TypeScript 6.0.3, Svelte 4.2.20 /
+5.57.1 and SvelteKit 2.70.3. Other coc.nvim revisions and operating systems have
+not yet been integration-tested.
 
 Available through the Svelte language server:
 
@@ -22,7 +23,8 @@ The client adds:
 
 -   A managed service in `:CocList services`, restart and output logging.
 -   Live TS/JS buffer synchronization, including replay after restart and discard on close.
--   TypeScript plugin discovery and configuration through coc-tsserver.
+-   TypeScript plugin discovery and configuration through coc-tsserver, including
+    unsaved Svelte props, replay after tsserver restart and discard on buffer close.
 -   Import updates for moves performed through CoC's file operations.
 -   Reference CodeLens adaptation, compiled JS/CSS previews, extraction and migration commands.
 -   Restart after saving Svelte, Vite, TypeScript or Prettier configuration.
@@ -40,16 +42,17 @@ coc-build
 coc-test
 coc-test-setup
 coc-test-integration
+coc-test-vim
 ```
 
 Without direnv, prefix each command with `devenv shell --`.
-Node, pnpm and Neovim come from Nix. pnpm is pinned to the upstream
+Node, pnpm, Neovim and Vim come from Nix. pnpm is pinned to the upstream
 `packageManager` version through a fixed-output Nix derivation; Corepack is not required.
 JavaScript dependencies use the committed pnpm lockfile. This is a Nix development
 environment, not an offline Nix derivation of the entire JavaScript dependency graph.
 
 `coc-test-setup` downloads a checksum-verified coc.nvim snapshot and installs its
-locked dependencies plus the locked test version of coc-tsserver.
+locked dependencies plus the locked test versions of coc-tsserver and SvelteKit.
 Integration tests use isolated editor configuration and data directories under
 `.coc-test/`; they do not change your Neovim configuration.
 
@@ -120,9 +123,10 @@ Templates target **Svelte 5 and SvelteKit >=2.16**; run your project's
 coc-build
 coc-pack
 pnpm --filter coc-svelte-language-tools test:package
+COC_TEST_EDITOR=vim pnpm --filter coc-svelte-language-tools test:package
 ```
 
-The archive is written to `artifacts/coc-svelte-language-tools-0.1.0.tgz`.
+The archive is written to `artifacts/coc-svelte-language-tools-0.2.0.tgz`.
 It bundles runtime dependencies, including the server patches from this checkout.
 The package test installs it offline using an empty npm cache, then runs the
 same headless editor tests against the installed extension.
@@ -133,18 +137,20 @@ No npm release has been published yet.
 
 ## Current boundaries
 
--   Changes in unsaved Svelte components are visible to the Svelte server; upstream's
-    separate TypeScript plugin still reads components from disk. Save the component
-    before expecting TS/JS diagnostics to reflect its changed interface.
+-   Unsaved Svelte buffers are forwarded to the bundled TypeScript plugin. A separately
+    installed, unpatched upstream plugin does not implement this extension protocol.
 -   External filesystem moves do not carry a reliable rename event; import updates
     require a move performed through CoC. Complex simultaneous folder moves need
     more coverage.
 -   Previews are snapshots; run the command again after editing.
--   SvelteKit language behavior is inherited from upstream. Dedicated SvelteKit,
-    multi-root, Vim, macOS and Windows integration matrices remain follow-up work.
+-   SvelteKit `$types` and `$lib`, multiple workspace roots, Svelte 4/5 and Vim are
+    integration-tested. SvelteKit 3, macOS and Windows remain outside the tested matrix.
 -   Tailwind and ESLint require their own providers. Avoid multiple formatting
     providers or HTML auto-close plugins acting on the same Svelte buffer.
 
 The automated integration suite currently exercises completion, runes, diagnostics,
-cross-file definitions, semantic tokens, formatting, unsaved TS changes, restart,
-coc-tsserver component resolution, import updates and compiled preview.
+cross-file definitions, semantic tokens, formatting, unsaved TS/Svelte changes,
+server restarts, plugin toggling, coc-tsserver component resolution, import updates,
+compiled preview, tag closing, snippets, route generation and overwrite protection.
+It also runs SvelteKit sync and verifies generated props, `$lib` definitions and
+Svelte 4/5 isolation in three workspace roots, in both Vim and Neovim.

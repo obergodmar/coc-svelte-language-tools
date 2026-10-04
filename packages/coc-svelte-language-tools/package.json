@@ -1,6 +1,6 @@
 {
     "name": "coc-svelte-language-tools",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "description": "Svelte and SvelteKit language support for coc.nvim, maintained with upstream language-tools",
     "license": "MIT",
     "author": "obergodmar",
