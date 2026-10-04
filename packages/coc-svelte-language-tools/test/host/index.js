@@ -22,6 +22,7 @@ exports.activate = (context) => {
         commands.registerCommand('svelte.test', async () => {
             const passed = [];
             const run = async (name, fn) => {
+                if (process.env.COC_SVELTE_TEST && name !== process.env.COC_SVELTE_TEST) return;
                 fs.writeFileSync(
                     process.env.COC_SVELTE_RESULT,
                     JSON.stringify({ passed, running: name })
@@ -311,14 +312,49 @@ exports.activate = (context) => {
                 });
                 await run('compiled preview', async () => {
                     await workspace.openResource(file('Child.svelte'));
-                    await commands.executeCommand('svelte.showCompiledCode');
-                    await eventually(async () => {
-                        const { document } = await workspace.getCurrentState();
-                        assert.equal(Uri.parse(document.uri).scheme, 'svelte-compiled');
-                        assert.match(document.getText(), /svelte/);
-                        assert.equal(await workspace.nvim.eval('&l:modifiable'), 0);
-                        assert.equal(await workspace.nvim.eval('&l:filetype'), 'javascript');
-                    }, 'compiled preview buffer was not attached');
+                    const sourceBuffer = await workspace.nvim.call('bufnr', ['%']);
+                    for (const [command, filetype] of [
+                        ['svelte.showCompiledCode', 'javascript'],
+                        ['svelte.showCompiledCSS', 'css']
+                    ]) {
+                        await workspace.nvim.command(`CocCommand ${command}`);
+                        await eventually(async () => {
+                            assert.equal(await workspace.nvim.eval('&l:buftype'), 'nofile');
+                            assert.equal(await workspace.nvim.eval('&l:filetype'), filetype);
+                            assert.equal(await workspace.nvim.eval('&l:modifiable'), 0);
+                            assert.equal(await workspace.nvim.eval('&l:readonly'), 1);
+                            assert.equal(await workspace.nvim.eval('&l:buflisted'), 0);
+                            assert.equal(await workspace.nvim.eval('b:current_syntax'), filetype);
+                            assert.equal(
+                                await workspace.nvim.eval('b:svelte_test_filetype_event'),
+                                filetype
+                            );
+                            assert.match(
+                                await workspace.nvim.call('bufname', ['%']),
+                                /\[Svelte compiled\]/
+                            );
+                            const lines = await workspace.nvim.call('getline', [1, '$']);
+                            assert.match(lines.join('\n'), filetype === 'css' ? /color/ : /svelte/);
+                            // Verify a real syntax group at a generated token, not just options.
+                            const line = await workspace.nvim.call('search', [
+                                filetype === 'css' ? 'color' : '^import',
+                                'nw'
+                            ]);
+                            assert.ok(line > 0);
+                            const text = lines[line - 1];
+                            const column = filetype === 'css' ? text.indexOf('color') + 1 : 1;
+                            assert.notEqual(
+                                await workspace.nvim.eval(
+                                    `synIDattr(synID(${line}, ${column}, 1), 'name')`
+                                ),
+                                ''
+                            );
+                        }, 'scratch preview was not initialized and highlighted');
+                        await workspace.nvim.command('close');
+                        assert.equal(await workspace.nvim.call('bufnr', ['%']), sourceBuffer);
+                        assert.equal(await workspace.nvim.eval('&l:buftype'), '');
+                        assert.equal(await workspace.nvim.eval('&l:modifiable'), 1);
+                    }
                 });
                 await run('multi-root Svelte 4 and Svelte 5 isolation', async () => {
                     assert.equal(workspace.workspaceFolders.length, 3);
@@ -398,6 +434,7 @@ exports.activate = (context) => {
                         );
                     }, 'generated PageProps must preserve the load return type');
                 });
+                assert.ok(passed.length > 0, 'No integration scenarios selected');
                 fs.writeFileSync(
                     process.env.COC_SVELTE_RESULT,
                     JSON.stringify({ passed }, null, 2)

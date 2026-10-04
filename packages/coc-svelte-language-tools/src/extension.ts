@@ -19,6 +19,7 @@ import { filterRenameEdit } from './rename';
 import { activateTagClosing } from './tagClosing';
 import { activateSnippets } from './snippets';
 import { activateRoutes } from './routes';
+import { openCompiledPreview } from './preview';
 
 let activeClient: LanguageClient | undefined;
 
@@ -210,22 +211,6 @@ export function activate(context: ExtensionContext) {
                 command: 'extract_to_svelte_component',
                 arguments: [document.uri, { uri: document.uri, range, filePath }]
             });
-        }),
-        workspace.registerTextDocumentContentProvider('svelte-compiled', {
-            async provideTextDocumentContent(uri) {
-                const response = await (
-                    await ready()
-                ).sendRequest<{
-                    js?: { code: string };
-                    css?: { code: string };
-                } | null>('$/getCompiledCode', uri.query);
-                if (!response)
-                    return '// Svelte compilation failed. See diagnostics in the source buffer.';
-                return (
-                    (uri.path.endsWith('.css') ? response.css?.code : response.js?.code) ??
-                    '/* No output */'
-                );
-            }
         })
     );
     for (const [command, suffix] of [
@@ -236,17 +221,22 @@ export function activate(context: ExtensionContext) {
             commands.registerCommand(`svelte.${command}`, async () => {
                 const { document } = await workspace.getCurrentState();
                 if (document.languageId !== 'svelte') return;
-                await workspace.openResource(
-                    Uri.from({
-                        scheme: 'svelte-compiled',
-                        authority: 'preview',
-                        path: `/preview.${suffix}`,
-                        query: document.uri,
-                        fragment: String(document.version)
-                    }).toString()
-                );
-                await workspace.nvim.command(
-                    `setlocal buftype=nofile bufhidden=wipe noswapfile nomodifiable readonly filetype=${suffix === 'css' ? 'css' : 'javascript'}`
+                const response = await (
+                    await ready()
+                ).sendRequest<{
+                    js?: { code: string };
+                    css?: { code: string };
+                } | null>('$/getCompiledCode', document.uri);
+                if (!response) {
+                    await window.showErrorMessage(
+                        'Svelte compilation failed. See diagnostics in the source buffer.'
+                    );
+                    return;
+                }
+                return openCompiledPreview(
+                    Uri.parse(document.uri).fsPath,
+                    suffix === 'css' ? 'css' : 'javascript',
+                    (suffix === 'css' ? response.css?.code : response.js?.code) ?? '/* No output */'
                 );
             })
         );
