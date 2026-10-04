@@ -434,6 +434,17 @@ exports.activate = (context) => {
                         );
                     }, 'generated PageProps must preserve the load return type');
                 });
+                await run('environment report', async () => {
+                    await workspace.openResource(file('App.svelte'));
+                    const report = await commands.executeCommand('svelte.showEnvironment');
+                    assert.match(report, /svelte: 5\./);
+                    assert.match(report, /Language client state: Running/);
+                    assert.match(report, /Last launched server entry: .*server\.js/);
+                    assert.match(report, /Server Svelte fallback: 4\./);
+                    assert.match(report, /coc-tsserver: .*active=true/);
+                    assert.match(report, /Extension: 0\.2\.0/);
+                    await workspace.openResource(file('App.svelte'));
+                });
                 assert.ok(passed.length > 0, 'No integration scenarios selected');
                 fs.writeFileSync(
                     process.env.COC_SVELTE_RESULT,

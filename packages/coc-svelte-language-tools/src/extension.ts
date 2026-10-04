@@ -20,6 +20,7 @@ import { activateTagClosing } from './tagClosing';
 import { activateSnippets } from './snippets';
 import { activateRoutes } from './routes';
 import { openCompiledPreview } from './preview';
+import { activateEnvironment, ServerEnvironment } from './environment';
 
 let activeClient: LanguageClient | undefined;
 
@@ -27,6 +28,14 @@ export function activate(context: ExtensionContext) {
     const output = window.createOutputChannel('Svelte');
     context.subscriptions.push(output);
     const tsPlugin = new TypeScriptPlugin(context, output);
+    let launched: Omit<ServerEnvironment, 'state'> = {};
+    context.subscriptions.push(
+        activateEnvironment(
+            context,
+            () => ({ ...launched, state: activeClient?.state }),
+            () => tsPlugin.enabled
+        )
+    );
     if (!workspace.getConfiguration('svelte').get('enable', true)) return;
 
     const client = new LanguageClient(
@@ -40,15 +49,16 @@ export function activate(context: ExtensionContext) {
                 throw new Error('svelte.language-server.ls-path must be an absolute path.');
             }
             const module = customPath || require.resolve('svelte-language-server/bin/server.js');
+            const runtime = config.get<string>('runtime') || process.execPath;
             // A factory returning ChildProcess uses stdio in coc's LanguageClient.
-            return Promise.resolve(
-                fork(module, ['--stdio', `--clientProcessId=${process.pid}`], {
-                    cwd: workspace.rootPath || undefined,
-                    execPath: config.get<string>('runtime') || process.execPath,
-                    execArgv: config.get<string[]>('runtime-args', []),
-                    stdio: ['pipe', 'pipe', 'pipe', 'ipc']
-                })
-            );
+            const child = fork(module, ['--stdio', `--clientProcessId=${process.pid}`], {
+                cwd: workspace.rootPath || undefined,
+                execPath: runtime,
+                execArgv: config.get<string[]>('runtime-args', []),
+                stdio: ['pipe', 'pipe', 'pipe', 'ipc']
+            });
+            launched = { module, runtime, pid: child.pid };
+            return Promise.resolve(child);
         },
         {
             documentSelector: [{ scheme: 'file', language: 'svelte' }],

@@ -78,15 +78,16 @@ Syntax highlighting and indentation remain the editor's responsibility.
 
 Run these through `:CocCommand`:
 
-| Command                                     | Purpose                                               |
-| ------------------------------------------- | ----------------------------------------------------- |
-| `svelte.restartLanguageServer`              | Restart and replay open TS/JS buffers                 |
-| `svelte.typescript.findFileReferences`      | Find imports of the current file                      |
-| `svelte.typescript.findComponentReferences` | Find usages of the current component                  |
-| `svelte.showCompiledCode`                   | Open a read-only JS snapshot of the component         |
-| `svelte.showCompiledCSS`                    | Open a read-only CSS snapshot of the component        |
-| `svelte.extractComponent`                   | Extract the last visual selection; prompts for a name |
-| `svelte.migrate_to_svelte_5`                | Apply the upstream Svelte 5 migration                 |
+| Command                                     | Purpose                                                       |
+| ------------------------------------------- | ------------------------------------------------------------- |
+| `svelte.showEnvironment`                    | Show project package versions, server paths and runtime state |
+| `svelte.restartLanguageServer`              | Restart and replay open TS/JS buffers                         |
+| `svelte.typescript.findFileReferences`      | Find imports of the current file                              |
+| `svelte.typescript.findComponentReferences` | Find usages of the current component                          |
+| `svelte.showCompiledCode`                   | Open a read-only JS snapshot of the component                 |
+| `svelte.showCompiledCSS`                    | Open a read-only CSS snapshot of the component                |
+| `svelte.extractComponent`                   | Extract the last visual selection; prompts for a name         |
+| `svelte.migrate_to_svelte_5`                | Apply the upstream Svelte 5 migration                         |
 
 Language settings under `svelte.plugin.*` follow upstream; a test detects schema
 drift after rebasing. `svelte.enable-ts-plugin` defaults to `true` and can be
@@ -157,3 +158,5 @@ server restarts, plugin toggling, coc-tsserver component resolution, import upda
 compiled preview, tag closing, snippets, route generation and overwrite protection.
 It also runs SvelteKit sync and verifies generated props, `$lib` definitions and
 Svelte 4/5 isolation in three workspace roots, in both Vim and Neovim.
+
+Run `:CocCommand svelte.showEnvironment` from the affected project buffer to open a copyable report in **Svelte Environment**. It distinguishes project package resolution, bundled server dependencies, configured paths and the last launched process. It also works with `svelte.enable: false` and does not start servers or execute project configuration. Project resolution is an on-disk check, not a claim about modules already loaded by a custom server.
