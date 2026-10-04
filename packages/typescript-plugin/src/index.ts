@@ -136,8 +136,7 @@ function init(modules: { typescript: typeof ts }): ts.server.PluginModule {
             configManager
         );
 
-        const updateProjectWhenConfigChanges = (_config: Configuration, changedFiles: string[]) => {
-            changedFiles.forEach((file) => snapshotManager.refreshOpenFile(file));
+        const updateProjectWhenConfigChanges = () => {
             // enabling/disabling the plugin means TS has to recompute stuff
             // don't clear semantic cache here
             // typescript now expected the program updates to be completely in their control
@@ -152,6 +151,10 @@ function init(modules: { typescript: typeof ts }): ts.server.PluginModule {
             }
         };
         configManager.onConfigurationChanged(updateProjectWhenConfigChanges);
+        const updateOpenSvelteFiles = (files: string[]) => {
+            files.forEach((file) => snapshotManager.refreshOpenFile(file));
+        };
+        configManager.onSvelteDocumentsChanged(updateOpenSvelteFiles);
 
         return decorateLanguageService(
             info.languageService,
@@ -163,6 +166,7 @@ function init(modules: { typescript: typeof ts }): ts.server.PluginModule {
             () => {
                 projectSvelteFilesManager?.dispose();
                 configManager.removeConfigurationChangeListener(updateProjectWhenConfigChanges);
+                configManager.removeSvelteDocumentsChangeListener(updateOpenSvelteFiles);
                 moduleLoaderDisposable.dispose();
             }
         );

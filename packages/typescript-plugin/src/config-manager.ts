@@ -18,14 +18,20 @@ export class ConfigManager {
         assumeIsSvelteProject: false
     };
 
-    onConfigurationChanged(listener: (config: Configuration, changedFiles: string[]) => void) {
+    onConfigurationChanged(listener: (config: Configuration) => void) {
         this.emitter.on(configurationEventName, listener);
     }
 
-    removeConfigurationChangeListener(
-        listener: (config: Configuration, changedFiles: string[]) => void
-    ) {
+    removeConfigurationChangeListener(listener: (config: Configuration) => void) {
         this.emitter.off(configurationEventName, listener);
+    }
+
+    onSvelteDocumentsChanged(listener: (changedFiles: string[]) => void) {
+        this.emitter.on('svelte-documents-changed', listener);
+    }
+
+    removeSvelteDocumentsChangeListener(listener: (changedFiles: string[]) => void) {
+        this.emitter.off('svelte-documents-changed', listener);
     }
 
     isConfigChanged(config: Configuration) {
@@ -50,11 +56,15 @@ export class ConfigManager {
                 previous.get(file) !== next.get(file) ||
                 (config.enable !== undefined && config.enable !== this.config.enable)
         );
+        const overlaysOnly =
+            config.svelteDocuments !== undefined && config.enable === this.config.enable;
         this.config = {
             ...this.config,
             ...config
         };
-        this.emitter.emit(configurationEventName, config, changedFiles);
+        // Buffer edits must not tear down directory watchers and project roots.
+        if (!overlaysOnly) this.emitter.emit(configurationEventName, config);
+        if (changedFiles.length) this.emitter.emit('svelte-documents-changed', changedFiles);
     }
 
     getConfig() {
