@@ -239,10 +239,14 @@ export function activate(context: ExtensionContext) {
                 await workspace.openResource(
                     Uri.from({
                         scheme: 'svelte-compiled',
+                        authority: 'preview',
                         path: `/preview.${suffix}`,
                         query: document.uri,
                         fragment: String(document.version)
                     }).toString()
+                );
+                await workspace.nvim.command(
+                    `setlocal buftype=nofile bufhidden=wipe noswapfile nomodifiable readonly filetype=${suffix === 'css' ? 'css' : 'javascript'}`
                 );
             })
         );
