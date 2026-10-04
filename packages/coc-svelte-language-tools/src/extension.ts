@@ -211,6 +211,39 @@ export function activate(context: ExtensionContext) {
                 arguments: [document.uri, { uri: document.uri, range, filePath }]
             });
         }),
+        workspace.registerAutocmd({
+            event: 'BufWinEnter',
+            pattern: 'svelte-compiled://*',
+            arglist: ['str2nr(expand("<abuf>"))', 'expand("<afile>")', 'win_getid()'],
+            callback: async (bufnr: number, name: string, winid: number) => {
+                const uri = Uri.parse(name);
+                if (uri.scheme !== 'svelte-compiled') return;
+                const filetype = uri.path.endsWith('.css') ? 'css' : 'javascript';
+                // Configure the actual preview buffer on every display, including
+                // URI/session reopen. Never depend on the current buffer after an await.
+                for (const [option, value] of Object.entries({
+                    buftype: 'nofile',
+                    bufhidden: 'wipe',
+                    swapfile: false,
+                    filetype,
+                    syntax: filetype,
+                    modifiable: false,
+                    readonly: true
+                })) {
+                    const setting =
+                        typeof value === 'boolean' ? Number(value) : JSON.stringify(value);
+                    await workspace.nvim.command(
+                        `call setbufvar(${bufnr}, '&${option}', ${setting})`
+                    );
+                }
+                // Keep the fallback local to the preview window, even if another
+                // autocommand moved focus while the content was being loaded.
+                await workspace.nvim.call('win_execute', [
+                    winid,
+                    `if bufnr('%') == ${bufnr} && !exists('b:current_syntax') | runtime! syntax/${filetype}.vim | endif`
+                ]);
+            }
+        }),
         workspace.registerTextDocumentContentProvider('svelte-compiled', {
             async provideTextDocumentContent(uri) {
                 const response = await (
@@ -244,15 +277,6 @@ export function activate(context: ExtensionContext) {
                         query: document.uri,
                         fragment: String(document.version)
                     }).toString()
-                );
-                const filetype = suffix === 'css' ? 'css' : 'javascript';
-                await workspace.nvim.command(
-                    `setlocal buftype=nofile bufhidden=wipe noswapfile nomodifiable readonly filetype=${filetype} syntax=${filetype}`
-                );
-                // Some editor setups only start Tree-sitter for normal file buffers.
-                // Load a buffer-local fallback even when global syntax autocommands are off.
-                await workspace.nvim.command(
-                    `if !exists('b:current_syntax') | runtime! syntax/${filetype}.vim | endif`
                 );
             })
         );
