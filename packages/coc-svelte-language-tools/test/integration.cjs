@@ -99,6 +99,10 @@ let g:coc_global_extensions = []
 let g:WorkspaceFolders = [${[fixture, projects.legacy, projects.kit].map(quote).join(', ')}]
 execute 'set runtimepath^=' . fnameescape(${quote(runtime)})
 filetype plugin indent on
+augroup svelte_test_filetypes
+  autocmd!
+  autocmd FileType javascript,css let b:svelte_test_filetype_event = expand('<amatch>')
+augroup END
 runtime plugin/coc.vim
 function! FinishSvelteTests(error, result)
   if a:error isnot v:null
