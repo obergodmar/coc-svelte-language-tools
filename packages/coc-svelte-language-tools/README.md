@@ -26,6 +26,8 @@ The client adds:
 -   Import updates for moves performed through CoC's file operations.
 -   Reference CodeLens adaptation, compiled JS/CSS previews, extraction and migration commands.
 -   Restart after saving Svelte, Vite, TypeScript or Prettier configuration.
+-   Automatic tag closing and native Svelte block snippets.
+-   SvelteKit route file generation for TypeScript and JavaScript.
 
 ## Development
 
@@ -92,6 +94,26 @@ and takes effect after reloading CoC. It does not disable the separate TS plugin
 server launch settings. `ls-path` must be absolute. Restart the server after
 changing them. Use `:CocCommand workspace.showOutput Svelte` for server output.
 
+## Editing helpers
+
+`svelte.autoClosingTags` defaults to `true`. Tag closing uses
+upstream's `html/tag` request, respects void elements, and discards replies after
+further edits, cursor movement or leaving insert mode. Disable it if another
+plugin already closes tags.
+
+Type `s-` at the beginning of a line to complete `s-if`, `s-each`, `s-await`,
+`s-key`, `s-snippet`, `s-render`, `s-script` or `s-style`. CoC handles snippet
+placeholders; coc-snippets is not required. Disable completion with
+`svelte.snippets.enable: false`. `:CocCommand svelte.insertSnippet` also opens a
+picker and supports inserting a selected block at the cursor.
+
+`:CocCommand svelte.createRouteFile` asks for an absolute route directory, file
+kind and TS/JS language. It supports page, layout, their universal/server load
+files, endpoints and error pages. Existing files are never overwritten. Custom
+route directories, route groups and dynamic parameter directories are supported.
+Templates target **Svelte 5 and SvelteKit >=2.16**; run your project's
+`svelte-kit sync` to generate `$types`. The generator does not install SvelteKit.
+
 ## Build and verify an installable archive
 
 ```sh
@@ -118,8 +140,6 @@ No npm release has been published yet.
     require a move performed through CoC. Complex simultaneous folder moves need
     more coverage.
 -   Previews are snapshots; run the command again after editing.
--   Automatic tag insertion, SvelteKit route scaffolding and editor-specific snippets
-    are not implemented yet. Linked editing is available through LSP.
 -   SvelteKit language behavior is inherited from upstream. Dedicated SvelteKit,
     multi-root, Vim, macOS and Windows integration matrices remain follow-up work.
 -   Tailwind and ESLint require their own providers. Avoid multiple formatting
