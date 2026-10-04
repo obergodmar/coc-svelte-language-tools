@@ -62,6 +62,15 @@ let label: string = value;
 <p>{count} {label}</p>
 `
 );
+fs.writeFileSync(
+    path.join(fixture, 'Features.svelte'),
+    `<script lang="ts">
+import Child from './Child.svelte';
+const message = 'Hello';
+</script>
+<h1>{message}</h1>
+`
+);
 fs.writeFileSync(path.join(fixture, 'Tags.svelte'), '<section');
 fs.writeFileSync(path.join(fixture, 'Snippet.svelte'), '');
 fs.writeFileSync(path.join(fixture, 'value.ts'), 'export const value = 42;\n');
@@ -69,7 +78,11 @@ fs.writeFileSync(
     path.join(fixture, 'Child.svelte'),
     '<script lang="ts">let { name }: { name: string } = $props();</script>\n<p>{name}</p>\n'
 );
-fs.writeFileSync(path.join(fixture, 'index.ts'), "import Child from './Child.svelte';\nChild;\n");
+fs.writeFileSync(
+    path.join(fixture, 'index.ts'),
+    "import Child from './Child.svelte';\nChild;\nimport type { ComponentProps } from 'svelte';\nconst props: ComponentProps<typeof Child> = { name: 42 };\n"
+);
+const projects = require('./projects.cjs').createProjects(run, scratch, developmentExtension);
 const quote = (value) => `'${value.replaceAll("'", "''")}'`;
 const init = path.join(run, 'init.vim');
 fs.writeFileSync(
@@ -83,6 +96,7 @@ let g:coc_config_home = ${quote(path.join(run, 'config'))}
 let g:coc_node_path = ${quote(process.execPath)}
 let g:coc_disable_startup_warning = 1
 let g:coc_global_extensions = []
+let g:WorkspaceFolders = [${[fixture, projects.legacy, projects.kit].map(quote).join(', ')}]
 execute 'set runtimepath^=' . fnameescape(${quote(runtime)})
 filetype plugin indent on
 runtime plugin/coc.vim
@@ -95,7 +109,12 @@ function! FinishSvelteTests(error, result)
 endfunction
 function! RunSvelteTests(timer)
   try
-    if wait(20000, {-> get(g:, 'coc_service_initialized', 0)}, 50) != 0
+    let attempts = 0
+    while !get(g:, 'coc_service_initialized', 0) && attempts < 400
+      sleep 50m
+      let attempts += 1
+    endwhile
+    if !get(g:, 'coc_service_initialized', 0)
       throw 'coc.nvim did not initialize'
     endif
     call CocAction('registerExtensions', ${quote(path.join(scratch, 'extensions/node_modules/coc-tsserver'))}, ${quote(extension)}, ${quote(path.join(__dirname, 'host'))})
@@ -109,14 +128,22 @@ call timer_start(100, function('RunSvelteTests'))
 `
 );
 const resultFile = path.join(run, 'result.json');
-const result = spawnSync('nvim', ['--headless', '-u', init, '-i', 'NONE'], {
+const editor = process.env.COC_TEST_EDITOR || 'nvim';
+assert.ok(['nvim', 'vim'].includes(editor));
+const args =
+    editor === 'vim'
+        ? ['-N', '-n', '-X', '-u', init, '-i', 'NONE']
+        : ['--headless', '-u', init, '-i', 'NONE'];
+const result = spawnSync(editor, args, {
     cwd: fixture,
-    timeout: 90000,
+    timeout: 180000,
     encoding: 'utf8',
     env: {
         ...process.env,
         TMPDIR: path.join(run, 'tmp'),
         COC_SVELTE_FIXTURE: fixture,
+        COC_SVELTE_LEGACY: projects.legacy,
+        COC_SVELTE_KIT: projects.kit,
         COC_SVELTE_RESULT: resultFile,
         XDG_CONFIG_HOME: path.join(run, 'xdg-config'),
         XDG_DATA_HOME: path.join(run, 'xdg-data'),
@@ -129,10 +156,14 @@ const result = spawnSync('nvim', ['--headless', '-u', init, '-i', 'NONE'], {
 console.log(`Integration artifacts: ${run}`);
 if (fs.existsSync(resultFile)) console.log(fs.readFileSync(resultFile, 'utf8'));
 if (result.status !== 0) {
-    console.error(result.stdout, result.stderr, result.error || '');
+    fs.writeFileSync(
+        path.join(run, 'editor-output.log'),
+        `${result.stdout || ''}\n${result.stderr || ''}`
+    );
+    console.error(result.error || `See ${path.join(run, 'editor-output.log')}`);
     if (fs.existsSync(path.join(run, 'vim-error')))
         console.error(fs.readFileSync(path.join(run, 'vim-error'), 'utf8'));
 }
-assert.equal(result.status, 0, 'headless Neovim integration failed');
+assert.equal(result.status, 0, `${editor} integration failed`);
 assert.ok(fs.existsSync(resultFile), 'test host did not run');
 assert.equal(JSON.parse(fs.readFileSync(resultFile)).error, undefined);

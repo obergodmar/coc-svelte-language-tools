@@ -31,6 +31,12 @@ async function main() {
         fs.copyFileSync(path.join(__dirname, 'runtime', file), path.join(extensions, file));
     }
     execFileSync('npm', ['ci', '--no-audit', '--no-fund'], { cwd: extensions, stdio: 'inherit' });
+    const kit = path.join(scratch, 'kit-runtime');
+    fs.mkdirSync(kit, { recursive: true });
+    for (const file of ['package.json', 'package-lock.json']) {
+        fs.copyFileSync(path.join(__dirname, 'kit-runtime', file), path.join(kit, file));
+    }
+    execFileSync('npm', ['ci', '--no-audit', '--no-fund'], { cwd: kit, stdio: 'inherit' });
     console.log(`Test runtime: ${runtime}`);
 }
 main().catch((error) => {
