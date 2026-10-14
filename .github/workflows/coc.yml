@@ -25,6 +25,9 @@ jobs:
       - name: Build and test
         shell: devenv shell -- bash -e {0}
         run: |
+          if [[ "$GITHUB_EVENT_NAME" == push && "$GITHUB_REF" == refs/heads/coc ]]; then
+            node packages/coc-svelte-language-tools/scripts/release.cjs prepare
+          fi
           coc-setup
           coc-build
           coc-test
@@ -37,6 +40,14 @@ jobs:
           COC_TEST_EDITOR=vim pnpm --filter @obergodmar/coc-svelte-language-tools test:package
           pnpm exec prettier --check packages/coc-svelte-language-tools .github/workflows/coc.yml
           nixfmt --check devenv.nix nix/pnpm.nix
+      - name: Upload tested release
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-release
+          if-no-files-found: error
+          path: |
+            artifacts/*.tgz
+            artifacts/release.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -49,3 +60,27 @@ jobs:
             .coc-test/run-*/vim-error
             .coc-test/run-*/editor-output.log
             .coc-test/run-*/tsserver-logs/**/*.log
+
+  publish:
+    needs: integration
+    if: github.event_name == 'push' && github.ref == 'refs/heads/coc' && github.repository == 'obergodmar/coc-svelte-language-tools'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    concurrency:
+      group: npm-publish
+      cancel-in-progress: false
+      queue: max
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.21.0'
+      - uses: actions/download-artifact@v4
+        with:
+          name: npm-release
+          path: artifacts
+      - name: Publish verified archive with npm trusted publishing
+        run: node packages/coc-svelte-language-tools/scripts/release.cjs publish artifacts

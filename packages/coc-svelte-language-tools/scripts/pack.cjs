@@ -92,4 +92,18 @@ const packed = JSON.parse(
         encoding: 'utf8'
     })
 );
+fs.writeFileSync(
+    path.join(destination, 'release.json'),
+    JSON.stringify(
+        {
+            name: manifest.name,
+            version: manifest.version,
+            gitHead: manifest.gitHead,
+            filename: packed[0].filename,
+            integrity: packed[0].integrity
+        },
+        null,
+        2
+    ) + '\n'
+);
 console.log(path.join(destination, packed[0].filename));

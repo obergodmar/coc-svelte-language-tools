@@ -145,6 +145,7 @@ const result = spawnSync(editor, args, {
     env: {
         ...process.env,
         TMPDIR: path.join(run, 'tmp'),
+        COC_SVELTE_VERSION: require(path.join(extension, 'package.json')).version,
         COC_SVELTE_FIXTURE: fixture,
         COC_SVELTE_LEGACY: projects.legacy,
         COC_SVELTE_KIT: projects.kit,

@@ -6,7 +6,7 @@ Initial upstream base: `bf2993e1` (2026-09-29).
 Keep `master` aligned with upstream and maintain the CoC patch series on `coc`.
 The CoC package, Nix environment and its workflow are additive. Upstream release
 workflows already restrict publishing to `sveltejs/language-tools`; the CoC
-workflow only builds, tests and uploads artifacts.
+workflow builds and tests changes, then publishes successful pushes to `coc` to npm.
 
 ## Updating
 
@@ -83,3 +83,39 @@ npm publish artifacts/obergodmar-coc-svelte-language-tools-0.2.0.tgz --access pu
 
 The public package name is `@obergodmar/coc-svelte-language-tools`. Update the
 package version and archive filename for each subsequent release.
+
+## Automatic npm releases
+
+`.github/workflows/coc.yml` publishes the head commit of every successful push to
+`coc` in `obergodmar/coc-svelte-language-tools`. Pull requests and manual workflow
+runs run checks without publishing. A push containing several commits produces
+one release of its head commit.
+
+The version is computed only in the CI checkout: keep the manifest at a stable
+base `MAJOR.MINOR.PATCH`; the release patch is `PATCH + github.run_number`.
+For example, base `0.2.0`, run 19 produces `0.2.19`. Reruns retain that version.
+Do not reset the workflow run counter or reuse these versions for manual releases.
+Bump the base minor/major when appropriate; no version-bump commits are generated.
+
+CI stamps `gitHead` before building, tests the self-contained archive in Vim and
+Neovim, and uploads it together with its SHA-512 metadata. The separate publish
+job downloads this exact archive, validates its manifest/hash, and publishes with
+provenance. Only this job receives `id-token: write`. It uses Node 24.21.0 and
+npm's OIDC support; no `NPM_TOKEN` secret is needed.
+
+Configure npm trusted publishing once (requires npm account 2FA):
+
+```sh
+npm trust github @obergodmar/coc-svelte-language-tools --file coc.yml --repo obergodmar/coc-svelte-language-tools --allow-publish --yes
+```
+
+The permission must allow direct publishing, not only staged publishing.
+Publishing jobs queue without canceling older builds (GitHub permits up to 100
+pending jobs in this group). Publication is serialized; newer versions use
+`latest`, late older builds use `history` so they cannot roll users back.
+A rerun skips publication only when the existing version's commit and archive
+hash match. A conflicting version fails instead of overwriting anything.
+
+After a failed publication, rerun the failed job with its original artifact.
+Registry visibility is checked after publishing. If propagation exceeds the
+verification timeout, inspect npm before retrying. `:CocUpdate` follows `latest`.

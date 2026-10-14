@@ -67,6 +67,11 @@ For automatic installation, add `'@obergodmar/coc-svelte-language-tools'` to
 session-local registration of the development extension and disable `coc-svelte`
 to avoid duplicate providers. Updates use `:CocUpdate`.
 
+Every successful push to the fork's `coc` branch publishes an automatically
+numbered version to npm after the full test suite and offline archive tests pass.
+These rolling releases use the `latest` tag. The archive includes the source
+commit (`gitHead`) and npm provenance.
+
 ## Load the development extension
 
 Build first. Disable/uninstall `coc-svelte` and remove any manually configured

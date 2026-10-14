@@ -444,7 +444,7 @@ exports.activate = (context) => {
                     assert.match(report, /Last launched server entry: .*server\.js/);
                     assert.match(report, /Server Svelte fallback: 4\./);
                     assert.match(report, /coc-tsserver: .*active=true/);
-                    assert.match(report, /Extension: 0\.2\.0/);
+                    assert.ok(report.includes(`Extension: ${process.env.COC_SVELTE_VERSION} —`));
                     await workspace.openResource(file('App.svelte'));
                 });
                 assert.ok(passed.length > 0, 'No integration scenarios selected');
