@@ -117,5 +117,6 @@ A rerun skips publication only when the existing version's commit and archive
 hash match. A conflicting version fails instead of overwriting anything.
 
 After a failed publication, rerun the failed job with its original artifact.
-Registry visibility is checked after publishing. If propagation exceeds the
+Registry visibility is checked for up to 15 minutes after publishing because npm
+can accept a release and process it asynchronously. If propagation exceeds the
 verification timeout, inspect npm before retrying. `:CocUpdate` follows `latest`.

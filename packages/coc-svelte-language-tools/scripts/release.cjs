@@ -98,12 +98,14 @@ async function publish(directory) {
         { stdio: 'inherit' }
     );
     // Registry propagation can lag behind a successful publish response.
-    for (let attempt = 0; attempt < 30; attempt++) {
+    for (let attempt = 0; attempt < 180; attempt++) {
         const published = await registryVersion(name, version);
         if (published?.dist.integrity === integrity && published.gitHead === gitHead) {
             console.log(`Verified public ${name}@${version} (${tag})`);
             return;
         }
+        if (published) throw new Error('Registry version has unexpected commit or integrity');
+        if (attempt % 6 === 0) console.log(`Waiting for npm processing: ${name}@${version}`);
         await new Promise((resolve) => setTimeout(resolve, 5000));
     }
     throw new Error('Published version did not become visible with the expected integrity');

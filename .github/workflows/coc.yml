@@ -65,7 +65,7 @@ jobs:
     needs: integration
     if: github.event_name == 'push' && github.ref == 'refs/heads/coc' && github.repository == 'obergodmar/coc-svelte-language-tools'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 25
     permissions:
       contents: read
       id-token: write
