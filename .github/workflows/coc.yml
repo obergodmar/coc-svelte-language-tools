@@ -33,8 +33,8 @@ jobs:
           coc-test-integration
           coc-test-vim
           coc-pack
-          pnpm --filter coc-svelte-language-tools test:package
-          COC_TEST_EDITOR=vim pnpm --filter coc-svelte-language-tools test:package
+          pnpm --filter @obergodmar/coc-svelte-language-tools test:package
+          COC_TEST_EDITOR=vim pnpm --filter @obergodmar/coc-svelte-language-tools test:package
           pnpm exec prettier --check packages/coc-svelte-language-tools .github/workflows/coc.yml
           nixfmt --check devenv.nix nix/pnpm.nix
       - uses: actions/upload-artifact@v4

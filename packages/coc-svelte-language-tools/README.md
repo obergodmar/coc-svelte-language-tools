@@ -56,6 +56,17 @@ locked dependencies plus the locked test versions of coc-tsserver and SvelteKit.
 Integration tests use isolated editor configuration and data directories under
 `.coc-test/`; they do not change your Neovim configuration.
 
+## Install from npm
+
+```vim
+:CocInstall @obergodmar/coc-svelte-language-tools
+```
+
+For automatic installation, add `'@obergodmar/coc-svelte-language-tools'` to
+`g:coc_global_extensions`. Keep `coc-tsserver` for TS/JS integration. Remove
+session-local registration of the development extension and disable `coc-svelte`
+to avoid duplicate providers. Updates use `:CocUpdate`.
+
 ## Load the development extension
 
 Build first. Disable/uninstall `coc-svelte` and remove any manually configured
@@ -123,11 +134,11 @@ Templates target **Svelte 5 and SvelteKit >=2.16**; run your project's
 ```sh
 coc-build
 coc-pack
-pnpm --filter coc-svelte-language-tools test:package
-COC_TEST_EDITOR=vim pnpm --filter coc-svelte-language-tools test:package
+pnpm --filter @obergodmar/coc-svelte-language-tools test:package
+COC_TEST_EDITOR=vim pnpm --filter @obergodmar/coc-svelte-language-tools test:package
 ```
 
-The archive is written to `artifacts/coc-svelte-language-tools-0.2.0.tgz`.
+The archive is written to `artifacts/obergodmar-coc-svelte-language-tools-0.2.0.tgz`.
 It bundles runtime dependencies, including the server patches from this checkout.
 The package test installs it offline using an empty npm cache, then runs the
 same headless editor tests against the installed extension.

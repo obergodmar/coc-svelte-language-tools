@@ -31,7 +31,9 @@ exports.activate = (context) => {
                 passed.push(name);
             };
             try {
-                const extension = extensions.getExtensionById('coc-svelte-language-tools');
+                const extension = extensions.getExtensionById(
+                    '@obergodmar/coc-svelte-language-tools'
+                );
                 assert.ok(extension, 'extension loaded');
                 const api = await extension.activate();
                 const client = api.getLanguageServer();

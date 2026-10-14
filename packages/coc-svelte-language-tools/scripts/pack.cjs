@@ -6,7 +6,7 @@ const root = path.resolve(__dirname, '../../..');
 const scratch = path.join(root, '.coc-test');
 fs.mkdirSync(scratch, { recursive: true });
 const deployed = fs.mkdtempSync(path.join(scratch, 'deploy-'));
-execFileSync('pnpm', ['--filter', 'coc-svelte-language-tools', 'deploy', '--prod', deployed], {
+execFileSync('pnpm', ['--filter', require('../package.json').name, 'deploy', '--prod', deployed], {
     cwd: root,
     stdio: 'inherit'
 });

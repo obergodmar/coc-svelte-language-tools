@@ -1,5 +1,5 @@
 {
-    "name": "coc-svelte-language-tools",
+    "name": "@obergodmar/coc-svelte-language-tools",
     "version": "0.2.0",
     "description": "Svelte and SvelteKit language support for coc.nvim, maintained with upstream language-tools",
     "license": "MIT",
@@ -8,6 +8,10 @@
         "type": "git",
         "url": "https://github.com/obergodmar/coc-svelte-language-tools.git",
         "directory": "packages/coc-svelte-language-tools"
+    },
+    "publishConfig": {
+        "access": "public",
+        "registry": "https://registry.npmjs.org"
     },
     "main": "dist/extension.js",
     "files": [

@@ -25,7 +25,7 @@ devenv shell -- coc-test-setup
 devenv shell -- coc-test-integration
 devenv shell -- coc-test-vim
 devenv shell -- coc-pack
-devenv shell -- pnpm --filter coc-svelte-language-tools test:package
+devenv shell -- pnpm --filter @obergodmar/coc-svelte-language-tools test:package
 ```
 
 Inspect upstream changes in the VS Code client, custom server requests,
@@ -74,3 +74,12 @@ The current matrix covers Linux with Vim and Neovim, Svelte 4/5, SvelteKit 2
 generated types and multi-root projects. Expand it before claiming macOS/Windows
 or SvelteKit 3 parity. Test dependencies live outside the production workspace
 graph to avoid changing upstream compiler resolution.
+
+Publish the verified archive to npm (never the workspace directory):
+
+```sh
+npm publish artifacts/obergodmar-coc-svelte-language-tools-0.2.0.tgz --access public --registry=https://registry.npmjs.org
+```
+
+The public package name is `@obergodmar/coc-svelte-language-tools`. Update the
+package version and archive filename for each subsequent release.

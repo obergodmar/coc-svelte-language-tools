@@ -3,7 +3,8 @@ const path = require('node:path');
 const os = require('node:os');
 const { execFileSync } = require('node:child_process');
 const root = path.resolve(__dirname, '../../..');
-const version = require('../package.json').version;
+const { name, version } = require('../package.json');
+const archiveName = `${name.replace('@', '').replace('/', '-')}-${version}.tgz`;
 // Keep the installation outside the checkout so ancestor node_modules cannot
 // hide missing dependencies in the release archive.
 const install = fs.mkdtempSync(path.join(os.tmpdir(), 'coc-svelte-install-'));
@@ -19,8 +20,7 @@ execFileSync(
         '--no-fund',
         '--cache',
         path.join(install, 'empty-cache'),
-        process.env.COC_SVELTE_ARCHIVE ||
-            path.join(root, 'artifacts', `coc-svelte-language-tools-${version}.tgz`)
+        process.env.COC_SVELTE_ARCHIVE || path.join(root, 'artifacts', archiveName)
     ],
     {
         cwd: install,
@@ -31,7 +31,7 @@ execFileSync(process.execPath, [path.join(__dirname, 'integration.cjs')], {
     stdio: 'inherit',
     env: {
         ...process.env,
-        COC_SVELTE_EXTENSION: path.join(install, 'node_modules/coc-svelte-language-tools')
+        COC_SVELTE_EXTENSION: path.join(install, 'node_modules', name)
     }
 });
 fs.rmSync(install, { recursive: true, force: true });
