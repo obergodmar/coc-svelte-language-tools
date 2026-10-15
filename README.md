@@ -5,6 +5,14 @@ a coc.nvim client built alongside the upstream Svelte language tools.
 Development happens on the `coc` branch. See [maintenance notes](COC-MAINTENANCE.md)
 for the Nix environment, tests, packaging and upstream rebase workflow.
 
+> **coc.nvim support:** Install this fork's extension from
+> [npm](https://www.npmjs.com/package/@obergodmar/coc-svelte-language-tools) with
+> `:CocInstall @obergodmar/coc-svelte-language-tools`, or add
+> `'@obergodmar/coc-svelte-language-tools'` to `g:coc_global_extensions` for automatic
+> installation. Each push to the `coc` branch automatically publishes a new package
+> version to npm after all CI tests pass. Keep `coc-tsserver` installed and disable
+> `coc-svelte` to avoid duplicate providers.
+
 ---
 
 <p>
